@@ -16,45 +16,55 @@ Format:
 {"original":{"name":"Full product name","brand":"Brand","price":"₹XXXX","keyIngredients":["ing1","ing2"]},"dupes":[{"name":"Product name","brand":"Indian brand","price":"₹XXX","savings":"Save ₹XXXX","matchScore":90,"reason":"One sentence why it is a good dupe","tags":["Best Value"],"available":"Nykaa / Amazon India"},{"name":"Product name","brand":"Indian brand","price":"₹XXX","savings":"Save ₹XXXX","matchScore":85,"reason":"One sentence why it is a good dupe","tags":["Dermat Approved"],"available":"Nykaa"},{"name":"Product name","brand":"Indian brand","price":"₹XXX","savings":"Save ₹XXXX","matchScore":80,"reason":"One sentence why it is a good dupe","tags":["Same Ingredients"],"available":"Amazon India"}]}
 Use real Indian brands only. Prices in INR. Return ONLY the JSON.`;
 
-  try {
-    let parts = [];
-    if (imageBase64) {
-      parts = [
-        { text: prompt },
-        { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }
-      ];
-    } else {
-      parts = [{ text: prompt }];
-    }
+  const models = [
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-pro-latest',
+    'gemini-pro',
+    'gemini-1.0-pro'
+  ];
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com///v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig: { temperature: 0.2 }
-        })
+  for (const model of models) {
+    try {
+      let parts = [];
+      if (imageBase64) {
+        parts = [
+          { text: prompt },
+          { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }
+        ];
+      } else {
+        parts = [{ text: prompt }];
       }
-    );
 
-    const data = await response.json();
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { temperature: 0.2 }
+          })
+        }
+      );
 
-    if (!response.ok) {
-      return res.status(500).json({ error: 'Gemini error: ' + (data?.error?.message || JSON.stringify(data)) });
+      const data = await response.json();
+
+      if (!response.ok) continue;
+
+      let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) continue;
+
+      const result = JSON.parse(jsonMatch[0]);
+      result._model = model;
+      return res.status(200).json(result);
+
+    } catch (e) {
+      continue;
     }
-
-    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return res.status(500).json({ error: 'No JSON found in response' });
-
-    const result = JSON.parse(jsonMatch[0]);
-    return res.status(200).json(result);
-
-  } catch (e) {
-    return res.status(500).json({ error: 'Error: ' + e.message });
   }
+
+  return res.status(500).json({ error: 'No working Gemini model found for this API key. Please check AI Studio.' });
 }
