@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapDupe — Skincare Dupe Finder India</title>
+<meta name="description" content="Snap any skincare product and find affordable Indian alternatives instantly.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#FF4D8D;--pink-light:#FFF0F6;--pink-mid:#FFD6E8;
+  --dark:#1A0A10;--text:#2D1420;--muted:#8B6070;
+  --white:#FFFFFF;--surface:#FFF8FB;--border:#F0D5E2;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh}
+.app{max-width:480px;margin:0 auto}
+.header{background:var(--white);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--dark);letter-spacing:-.5px}
+.logo span{color:var(--pink)}
+.badge{background:var(--pink);color:white;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.05em}
+.hero{padding:28px 20px 20px;text-align:center}
+.hero-tag{display:inline-block;background:var(--pink-light);color:var(--pink);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.04em}
+.hero h1{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1.2;color:var(--dark);margin-bottom:8px}
+.hero h1 span{color:var(--pink)}
+.hero p{font-size:13px;color:var(--muted);line-height:1.6}
+.upload-zone{margin:0 20px 20px;border:2px dashed var(--pink-mid);border-radius:20px;background:var(--pink-light);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--pink);background:#FFE8F2}
+.upload-zone.dragging{border-color:var(--pink);background:#FFE8F2;transform:scale(1.01)}
+.upload-icon{width:52px;height:52px;background:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:1.5px solid var(--pink-mid)}
+.upload-icon svg{width:22px;height:22px;stroke:var(--pink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.upload-zone h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.upload-zone p{font-size:12px;color:var(--muted)}
+.upload-zone input{display:none}
+.or-row{display:flex;align-items:center;gap:10px;margin:0 20px 16px;color:var(--muted);font-size:12px}
+.or-row::before,.or-row::after{content:'';flex:1;height:1px;background:var(--border)}
+.url-row{margin:0 20px 20px;display:flex;gap:8px}
+.url-row input{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:var(--white);color:var(--text)}
+.url-row input:focus{border-color:var(--pink)}
+.url-row input::placeholder{color:var(--muted)}
+.url-row button{background:var(--pink);color:white;border:none;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.preview-section{margin:0 20px 20px}
+.preview-img{width:100%;border-radius:16px;object-fit:cover;max-height:220px;display:block;border:1.5px solid var(--border)}
+.analyze-btn{width:100%;margin-top:12px;background:var(--pink);color:white;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;letter-spacing:.02em;transition:all .2s}
+.analyze-btn:hover{background:#E63D7A;transform:translateY(-1px)}
+.loading{margin:0 20px 20px;text-align:center;padding:36px}
+.spinner{width:36px;height:36px;border:3px solid var(--pink-mid);border-top-color:var(--pink);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:13px;color:var(--muted)}
+.loading strong{display:block;font-family:'Syne',sans-serif;font-size:15px;color:var(--dark);margin-bottom:4px}
+.results{margin:0 20px 24px}
+.identified-box{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:16px}
+.i-label{font-size:11px;font-weight:600;color:var(--pink);letter-spacing:.06em;margin-bottom:6px}
+.i-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--dark);margin-bottom:2px}
+.i-price{font-size:13px;color:var(--muted)}
+.i-price strong{color:var(--pink)}
+.results-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--dark);margin-bottom:10px}
+.dupe-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;transition:all .2s}
+.dupe-card:hover{border-color:var(--pink);transform:translateY(-1px)}
+.dupe-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.dupe-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--dark)}
+.dupe-brand{font-size:11px;color:var(--muted);margin-top:1px}
+.price{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--pink);text-align:right}
+.save{font-size:10px;color:var(--muted);text-align:right}
+.dupe-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.dupe-tags{display:flex;gap:6px;flex-wrap:wrap}
+.dupe-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--pink-light);color:var(--pink)}
+.dupe-tag.green{background:#EAFAF1;color:#1E8A4A}
+.buy-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.buy-btn{display:block;width:100%;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;text-decoration:none;background:var(--dark);color:white}
+.buy-btn.nykaa{background:#FC2779;color:white}
+.buy-btn.amazon{background:#FF9900;color:#111}
+.try-examples{margin:0 20px 20px}
+.ex-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;letter-spacing:.06em}
+.ex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ex-item{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.ex-item:hover{border-color:var(--pink);background:var(--pink-light)}
+.ex-emoji{font-size:20px;margin-bottom:4px}
+.ex-name{font-size:11px;font-weight:600;color:var(--dark);line-height:1.3}
+.ex-sub{font-size:10px;color:var(--muted)}
+.error-box{margin:0 20px 20px;background:#FFF0F0;border:1.5px solid #FFD0D0;border-radius:14px;padding:14px 16px;font-size:13px;color:#C0392B}
+.reset-btn{display:block;text-align:center;margin:0 20px 20px;color:var(--pink);font-size:13px;font-weight:600;cursor:pointer;padding:8px;background:var(--pink-light);border-radius:10px;border:none;width:calc(100% - 40px);font-family:'DM Sans',sans-serif}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">Snap<span>Dupe</span></div>
+    <div class="badge">BETA</div>
+  </div>
+
+  <div id="screen-upload">
+    <div class="hero">
+      <div class="hero-tag">Skincare Dupe Finder</div>
+      <h1>Snap it.<br><span>Save more.</span></h1>
+      <p>Upload any skincare product photo and SnapDupe will find you the best affordable alternatives available in India.</p>
+    </div>
+
+    <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-input').click()">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <h3>Upload a product photo</h3>
+      <p>From your camera or gallery — any skincare product</p>
+      <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
+    </div>
+
+    <div class="or-row">or search by product name</div>
+
+    <div class="url-row">
+      <input type="text" id="product-input" placeholder="e.g. The Ordinary Niacinamide 10%..." onkeydown="if(event.key==='Enter')analyzeText()">
+      <button onclick="analyzeText()">Find Dupes</button>
+    </div>
+
+    <div class="try-examples">
+      <div class="ex-title">POPULAR SEARCHES</div>
+      <div class="ex-grid">
+        <div class="ex-item" onclick="quickSearch('The Ordinary Niacinamide 10% serum')">
+          <div class="ex-emoji">✨</div>
+          <div class="ex-name">The Ordinary</div>
+          <div class="ex-sub">Niacinamide</div>
+        </div>
+        <div class="ex-item" onclick="quickSearch('CeraVe Moisturizing Cream')">
+          <div class="ex-emoji">💧</div>
+          <div class="ex-name">CeraVe</div>
+          <div class="ex-sub">Moisturizer</div>
+        </div>
+        <div class="ex-item" onclick="quickSearch('Laneige Lip Sleeping Mask')">
+          <div class="ex-emoji">💋</div>
+          <div class="ex-name">Laneige</div>
+          <div class="ex-sub">Lip Mask</div>
+        </div>
+        <div class="ex-item" onclick="quickSearch('Minimalist Sunscreen SPF 50')">
+          <div class="ex-emoji">☀️</div>
+          <div class="ex-name">Minimalist</div>
+          <div class="ex-sub">Sunscreen</div>
+        </div>
+        <div class="ex-item" onclick="quickSearch('SK-II Facial Treatment Essence')">
+          <div class="ex-emoji">🌸</div>
+          <div class="ex-name">SK-II</div>
+          <div class="ex-sub">Essence</div>
+        </div>
+        <div class="ex-item" onclick="quickSearch('Kiehl\'s Ultra Facial Cream')">
+          <div class="ex-emoji">🧴</div>
+          <div class="ex-name">Kiehl's</div>
+          <div class="ex-sub">Face Cream</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-preview" style="display:none">
+    <div class="preview-section">
+      <img id="preview-img" src="" alt="Product" class="preview-img">
+      <button class="analyze-btn" onclick="analyzeImage()">Find Dupes ✨</button>
+    </div>
+    <button class="reset-btn" onclick="reset()">← Go Back</button>
+  </div>
+
+  <div id="screen-loading" style="display:none">
+    <div class="loading">
+      <div class="spinner"></div>
+      <strong id="loading-msg">Identifying your product...</strong>
+      <p>Finding the best Indian alternatives for you</p>
+    </div>
+  </div>
+
+  <div id="screen-results" style="display:none">
+    <div class="results">
+      <div class="identified-box">
+        <div class="i-label">PRODUCT IDENTIFIED</div>
+        <div class="i-name" id="res-name">—</div>
+        <div class="i-price">Original price: <strong id="res-price">—</strong></div>
+      </div>
+      <div class="results-title">Top Alternatives in India 🇮🇳</div>
+      <div id="dupes-list"></div>
+    </div>
+    <button class="reset-btn" onclick="reset()">← Search another product</button>
+  </div>
+
+  <div id="screen-error" style="display:none">
+    <div class="error-box" id="error-msg">Something went wrong. Please try again.</div>
+    <button class="reset-btn" onclick="reset()">← Go Back</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+let currentImageBase64 = null;
+
+function showScreen(name){
+  ['upload','preview','loading','results','error'].forEach(s=>{
+    document.getElementById('screen-'+s).style.display = s===name?'block':'none';
+  });
+}
+
+function handleFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentImageBase64 = e.target.result.split(',')[1];
+    document.getElementById('preview-img').src = e.target.result;
+    showScreen('preview');
+  };
+  reader.readAsDataURL(file);
+}
+
+function quickSearch(text){
+  document.getElementById('product-input').value = text;
+  analyzeText();
+}
+
+async function analyzeText(){
+  const text = document.getElementById('product-input').value.trim();
+  if(!text) return;
+  showScreen('loading');
+  await callAPI(null, text);
+}
+
+async function analyzeImage(){
+  if(!currentImageBase64){ showScreen('error'); return; }
+  showScreen('loading');
+  await callAPI(currentImageBase64, null);
+}
+
+const msgs = [
+  'Identifying your product...',
+  'Checking active ingredients...',
+  'Searching Indian alternatives...',
+  'Comparing prices and reviews...'
+];
+let msgIdx = 0, msgTimer;
+
+function startMsgCycle(){
+  msgIdx = 0;
+  document.getElementById('loading-msg').textContent = msgs[0];
+  msgTimer = setInterval(()=>{
+    msgIdx = (msgIdx+1) % msgs.length;
+    document.getElementById('loading-msg').textContent = msgs[msgIdx];
+  }, 1800);
+}
+function stopMsgCycle(){ clearInterval(msgTimer); }
+
+async function callAPI(imageBase64, textQuery){
+  startMsgCycle();
+  try {
+    const body = {};
+    if(imageBase64) body.imageBase64 = imageBase64;
+    else body.query = textQuery;
+
+    const resp = await fetch('/api/finddupe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const result = await resp.json();
+    stopMsgCycle();
+
+    if(result.error){ showError(result.error); return; }
+    renderResults(result);
+
+  } catch(e){
+    stopMsgCycle();
+    showError('Something went wrong: ' + e.message);
+  }
+}
+
+function buildBuyButtons(containerId, brand, name){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const query = encodeURIComponent(brand + ' ' + name);
+
+  if(typeof AFFILIATE_CONFIG !== 'undefined'){
+    const az = AFFILIATE_CONFIG.amazon;
+    const ny = AFFILIATE_CONFIG.nykaa;
+
+    if(ny.active){
+      const a = document.createElement('a');
+      a.className = 'buy-btn nykaa';
+      a.href = ny.baseUrl + '?q=' + query + '&utm_source=snapdupe&tag=' + ny.tag;
+      a.target = '_blank';
+      a.textContent = 'Buy on Nykaa →';
+      container.appendChild(a);
+    } else {
+      const a = document.createElement('a');
+      a.className = 'buy-btn nykaa';
+      a.href = 'https://www.nykaa.com/search/result/?q=' + query;
+      a.target = '_blank';
+      a.textContent = 'Search on Nykaa →';
+      container.appendChild(a);
+    }
+
+    if(az.active){
+      const a = document.createElement('a');
+      a.className = 'buy-btn amazon';
+      a.href = az.baseUrl + '?k=' + query + '&tag=' + az.tag;
+      a.target = '_blank';
+      a.textContent = 'Buy on Amazon →';
+      container.appendChild(a);
+    } else {
+      const a = document.createElement('a');
+      a.className = 'buy-btn amazon';
+      a.href = 'https://www.amazon.in/s?k=' + query;
+      a.target = '_blank';
+      a.textContent = 'Search on Amazon →';
+      container.appendChild(a);
+    }
+  }
+}
+
+function renderResults(data){
+  const orig = data.original;
+  document.getElementById('res-name').textContent = orig.name || 'Product';
+  document.getElementById('res-price').textContent = orig.price || '—';
+
+  const list = document.getElementById('dupes-list');
+  list.innerHTML = '';
+
+  (data.dupes || []).forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'dupe-card';
+    const tagsHTML = (d.tags || []).map((t, ti) =>
+      `<span class="dupe-tag${ti===0?' green':''}">${t}</span>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="dupe-top">
+        <div>
+          <div class="dupe-name">${d.name}</div>
+          <div class="dupe-brand">${d.brand} &bull; ${d.available || ''}</div>
+        </div>
+        <div>
+          <div class="price">${d.price}</div>
+          <div class="save">${d.savings || ''}</div>
+        </div>
+      </div>
+      <div class="dupe-desc">${d.reason}</div>
+      <div class="dupe-tags">${tagsHTML}<span class="dupe-tag">${d.matchScore || 90}% match</span></div>
+      <div class="buy-btns" id="btns-${i}"></div>
+    `;
+    list.appendChild(card);
+    buildBuyButtons('btns-' + i, d.brand, d.name);
+  });
+
+  showScreen('results');
+}
+
+function showError(msg){
+  document.getElementById('error-msg').textContent = msg;
+  showScreen('error');
+}
+
+function reset(){
+  currentImageBase64 = null;
+  document.getElementById('product-input').value = '';
+  document.getElementById('file-input').value = '';
+  showScreen('upload');
+}
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragging'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragging'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragging');
+  const file = e.dataTransfer.files[0];
+  if(file && file.type.startsWith('image/')){
+    const reader = new FileReader();
+    reader.onload = ev => {
+      currentImageBase64 = ev.target.result.split(',')[1];
+      document.getElementById('preview-img').src = ev.target.result;
+      showScreen('preview');
+    };
+    reader.readAsDataURL(file);
+  }
+});
+</script>
+</body>
+</html>
