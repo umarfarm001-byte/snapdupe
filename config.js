@@ -1,8 +1,8 @@
 const AFFILIATE_CONFIG = {
   amazon: {
-    tag: "YOUR_AMAZON_TAG-21",
+    tag: "snapdupe-21",
     baseUrl: "https://www.amazon.in/s",
-    active: false
+    active: true
   },
   nykaa: {
     tag: "YOUR_NYKAA_TAG",
