@@ -18,9 +18,9 @@ Use real Indian brands only. Prices in INR. Return ONLY the JSON.`;
 
   const models = [
   'gemini-2.0-flash-lite',
+  'gemini-2.0-flash',
   'gemini-2.5-flash',
-  'gemini-1.5-flash-latest',
-  'gemini-2.0-flash'
+  'gemini-1.5-pro'
 ];
 
   for (const model of models) {
