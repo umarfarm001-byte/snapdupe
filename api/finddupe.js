@@ -6,65 +6,61 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { query, imageBase64 } = req.body;
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) return res.status(500).json({ error: 'API key not configured' });
+  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+  if (!OPENROUTER_API_KEY) return res.status(500).json({ error: 'API key not configured' });
 
   const prompt = `You are a skincare dupe expert for the Indian beauty market.
 Find dupes for: ${query || 'the product in the image'}.
 Return ONLY a raw JSON object. No markdown. No backticks. No explanation. Just JSON.
 Format:
 {"original":{"name":"Full product name","brand":"Brand","price":"₹XXXX","keyIngredients":["ing1","ing2"]},"dupes":[{"name":"Product name","brand":"Indian brand","price":"₹XXX","savings":"Save ₹XXXX","matchScore":90,"reason":"One sentence why it is a good dupe","tags":["Best Value"],"available":"Nykaa / Amazon India"},{"name":"Product name","brand":"Indian brand","price":"₹XXX","savings":"Save ₹XXXX","matchScore":85,"reason":"One sentence why it is a good dupe","tags":["Dermat Approved"],"available":"Nykaa"},{"name":"Product name","brand":"Indian brand","price":"₹XXX","savings":"Save ₹XXXX","matchScore":80,"reason":"One sentence why it is a good dupe","tags":["Same Ingredients"],"available":"Amazon India"}]}
-Use real Indian brands only. Prices in INR. Return ONLY the JSON.`;
+Use real Indian brands only: Minimalist, Dot & Key, Plum, mCaffeine, Mamaearth, WOW, Pilgrim, Re'equil, Acne Squad, The Derma Co, Cetaphil, Lotus, Lakme. Prices in INR. Return ONLY the JSON.`;
 
-  const models = [
-  'gemini-2.0-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-2.5-flash',
-  'gemini-1.5-pro'
-];
-
-  for (const model of models) {
-    try {
-      let parts = [];
-      if (imageBase64) {
-        parts = [
-          { text: prompt },
-          { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }
-        ];
-      } else {
-        parts = [{ text: prompt }];
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts }],
-            generationConfig: { temperature: 0.2 }
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) continue;
-
-      let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) continue;
-
-      const result = JSON.parse(jsonMatch[0]);
-      result._model = model;
-      return res.status(200).json(result);
-
-    } catch (e) {
-      continue;
+  try {
+    const messages = [];
+    if (imageBase64) {
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+        ]
+      });
+    } else {
+      messages.push({ role: 'user', content: prompt });
     }
-  }
 
-  return res.status(500).json({ error: 'No working Gemini model found for this API key. Please check AI Studio.' });
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://snapdupe.in',
+        'X-Title': 'SnapDupe'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.0-flash-exp:free',
+        messages,
+        temperature: 0.2
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(500).json({ error: 'API error: ' + (data?.error?.message || JSON.stringify(data)) });
+    }
+
+    let text = data?.choices?.[0]?.message?.content || '';
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'No JSON found in response' });
+
+    const result = JSON.parse(jsonMatch[0]);
+    return res.status(200).json(result);
+
+  } catch (e) {
+    return res.status(500).json({ error: 'Error: ' + e.message });
+  }
 }
