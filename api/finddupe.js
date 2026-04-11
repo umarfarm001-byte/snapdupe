@@ -40,7 +40,7 @@ Use real Indian brands only: Minimalist, Dot & Key, Plum, mCaffeine, Mamaearth, 
         'X-Title': 'SnapDupe'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
         messages,
         temperature: 0.2
       })
