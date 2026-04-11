@@ -7,6 +7,7 @@ export default async function handler(req, res) {
 
   const { query, imageBase64 } = req.body;
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+  if (!OPENROUTER_API_KEY) return res.status(500).json({ error: 'API key not configured - env: ' + JSON.stringify(Object.keys(process.env)) });
   if (!OPENROUTER_API_KEY) return res.status(500).json({ error: 'API key not configured' });
 
   const prompt = `You are a skincare dupe expert for the Indian beauty market.
